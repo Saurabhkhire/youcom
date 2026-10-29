@@ -1,0 +1,16 @@
+{
+  "name": "ghostcast-haunted-atlas",
+  "version": "1.0.0",
+  "description": "GHOSTCAST: The Haunted Atlas — a live, WebSocket-built atlas page for any spooky place.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  },
+  "license": "MIT"
+}

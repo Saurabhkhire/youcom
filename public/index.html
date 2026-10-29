@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHOSTCAST: The Haunted Atlas</title>
+<meta name="description" content="Describe a spooky place and watch a haunted atlas page build itself, live.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👻%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --ink:#2b1c0e; --ink-soft:#5a4129; --parch:#ead8ad; --parch-dark:#d4b97d; --rule:rgba(90,60,25,.35);
+  --night:#0b0810; --night2:#17101c; --candle:#ffb14a; --candle-dim:#c9772b; --ghost:#8ff5d2; --ghost-dim:#3fae93;
+  --danger:#c4553a; --good:#2f7d4f;
+  --serif:"Cormorant Garamond","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --body:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;min-height:100vh;color:#e9dcc3;font-family:var(--body);font-size:17px;line-height:1.55;
+  background:
+    radial-gradient(900px 500px at 4% 12%,rgba(255,150,50,.20),transparent 60%),
+    radial-gradient(900px 500px at 96% 14%,rgba(255,150,50,.18),transparent 60%),
+    radial-gradient(ellipse at 50% 0%,#241a22 0%,#120d15 55%,#07050a 100%);
+  background-attachment:fixed;overflow-x:hidden;
+}
+/* ---- drifting fog ---- */
+.fog{position:fixed;inset:-20% -10%;pointer-events:none;z-index:0;opacity:.55}
+.fog i{position:absolute;width:70vw;height:45vh;border-radius:50%;filter:blur(60px);
+  background:radial-gradient(closest-side,rgba(190,205,215,.22),transparent);animation:drift 60s linear infinite}
+.fog i:nth-child(1){top:5%;left:-30%;animation-duration:75s}
+.fog i:nth-child(2){top:45%;left:-45%;animation-duration:95s;animation-delay:-30s;opacity:.8}
+.fog i:nth-child(3){top:70%;left:-20%;animation-duration:65s;animation-delay:-12s}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(170vw)}}
+.wrap{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 18px 60px}
+/* ---- header ---- */
+header.top{text-align:center;padding:10px 0 4px}
+h1.brand{font-family:var(--serif);font-weight:700;letter-spacing:.18em;font-size:clamp(2rem,6vw,3.6rem);margin:0;
+  color:#ffe2a8;text-shadow:0 0 14px rgba(255,170,60,.65),0 0 40px rgba(255,120,30,.35)}
+h1.brand span{color:var(--ghost);text-shadow:0 0 14px rgba(143,245,210,.7)}
+.tag{font-family:var(--serif);font-style:italic;font-size:1.2rem;color:#d8c49c;margin:2px 0 14px}
+.conn{display:inline-flex;gap:8px;align-items:center;font-family:var(--mono);font-size:.74rem;color:#a89a80}
+.dot{width:9px;height:9px;border-radius:50%;background:#775;box-shadow:0 0 0 0 transparent}
+.dot.on{background:var(--ghost);box-shadow:0 0 8px var(--ghost)}
+/* ---- input ---- */
+.summon{max-width:860px;margin:6px auto 4px;padding:14px;border:1px solid rgba(255,190,100,.28);border-radius:14px;
+  background:linear-gradient(180deg,rgba(40,28,34,.85),rgba(18,12,20,.85));box-shadow:0 10px 40px rgba(0,0,0,.5),inset 0 0 30px rgba(255,150,50,.06)}
+.row{display:flex;gap:10px;align-items:stretch}
+textarea#msg{flex:1;resize:vertical;min-height:62px;max-height:180px;padding:12px 14px;border-radius:10px;border:1px solid #6b5230;
+  background:#120c14;color:#f4e7c9;font:inherit;font-size:1.05rem;line-height:1.4}
+textarea#msg::placeholder{color:#8f7f66;font-style:italic}
+textarea#msg:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--ghost);outline-offset:2px}
+button.go{font-family:var(--serif);font-weight:700;font-size:1.15rem;letter-spacing:.06em;padding:0 22px;border-radius:10px;border:1px solid #ffcf7e;cursor:pointer;
+  background:linear-gradient(180deg,#ffbf5e,#c7761f);color:#2a1507;box-shadow:0 0 18px rgba(255,160,50,.35)}
+button.go:hover{filter:brightness(1.08)}button.go:disabled{opacity:.5;cursor:wait}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+.chip{cursor:pointer;font:inherit;font-size:.92rem;padding:7px 12px;border-radius:999px;color:#f0dfba;background:rgba(255,190,100,.08);border:1px solid rgba(255,190,100,.35)}
+.chip:hover{background:rgba(255,190,100,.18);box-shadow:0 0 12px rgba(255,170,60,.3)}
+.chips .lbl{font-size:.82rem;color:#a89a80;font-style:italic}
+.demo-toggle{margin-left:auto;display:flex;gap:7px;align-items:center;font-size:.86rem;color:#cdbb97;cursor:pointer}
+.hint{font-size:.78rem;color:#9a8c72;margin:8px 2px 0}
+/* ---- layout ---- */
+main.grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:20px;margin-top:20px;align-items:start}
+@media(max-width:900px){main.grid{grid-template-columns:1fr}.row{flex-direction:column}button.go{padding:12px}.demo-toggle{margin-left:0}}
+/* ---- transmission log ---- */
+aside.log{position:sticky;top:12px;border:1px solid rgba(143,245,210,.28);border-radius:12px;background:rgba(5,10,10,.82);
+  box-shadow:0 0 30px rgba(63,174,147,.12),inset 0 0 40px rgba(0,0,0,.6);font-family:var(--mono);font-size:.8rem;color:var(--ghost);overflow:hidden}
+@media(max-width:900px){aside.log{position:static}}
+aside.log h2{margin:0;padding:9px 12px;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;border-bottom:1px solid rgba(143,245,210,.2);color:#b7ffe8;background:rgba(63,174,147,.08)}
+#log{max-height:62vh;overflow:auto;padding:10px 12px;margin:0;list-style:none}
+@media(max-width:900px){#log{max-height:200px}}
+#log li{padding:3px 0;animation:tick .45s ease-out both;word-break:break-word}
+#log li .t{color:#4f8f7e;margin-right:6px}
+#log li.err{color:#ff9d86}#log li.warn{color:#ffd37a}#log li.pend{color:#9bd9c8;opacity:.85}
+#log li.pend::after{content:" ▌";animation:blink 1s steps(1) infinite}
+#log li.ok::before{content:"✔ ";color:#72ffc9}
+@keyframes tick{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes blink{50%{opacity:0}}
+/* ---- atlas / parchment ---- */
+section#atlasWrap{position:relative;border-radius:14px;padding:26px 22px 30px;color:var(--ink);min-height:520px;
+  background-color:var(--parch);
+  background-image:
+    radial-gradient(ellipse at 18% 8%,rgba(255,255,255,.42),transparent 48%),
+    radial-gradient(ellipse at 85% 92%,rgba(140,80,20,.30),transparent 55%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .42  0 0 0 0 .28  0 0 0 0 .1  0 0 0 .22 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  box-shadow:inset 0 0 90px 18px rgba(88,48,10,.6),inset 0 0 0 2px rgba(90,55,20,.5),0 18px 60px rgba(0,0,0,.65),0 0 60px rgba(255,150,50,.12)}
+section#atlasWrap h2,section#atlasWrap h3{font-family:var(--serif);margin:0 0 6px;color:#3a220d;text-shadow:0 0 10px rgba(255,170,60,.35)}
+section#atlasWrap a{color:#7a3f12}
+#banner{display:none;margin:0 0 16px;padding:10px 14px;border-left:4px solid var(--candle-dim);background:rgba(90,55,20,.1);border-radius:0 8px 8px 0;font-style:italic}
+#banner .cl{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-style:normal}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.78rem;border:1px solid var(--rule);background:rgba(255,250,235,.45);color:#4a3017}
+#atlas{display:flex;flex-direction:column;gap:18px}
+.empty{text-align:center;padding:60px 10px;font-family:var(--serif);font-size:1.35rem;color:#6b4a26}
+.empty svg{width:120px;height:120px;opacity:.7;margin-bottom:6px}
+.comp{background:rgba(255,248,230,.38);border:1px solid var(--rule);border-radius:12px;padding:16px 18px;box-shadow:0 2px 0 rgba(255,255,255,.35) inset,0 6px 18px rgba(70,40,10,.18)}
+.comp.ink-in{animation:inkIn .9s cubic-bezier(.2,.7,.2,1) both}
+.comp.flash{animation:flash 1.2s ease-out}
+@keyframes inkIn{from{opacity:0;filter:blur(7px);transform:translateY(14px) scale(.985)}to{opacity:1;filter:none;transform:none}}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,170,60,.9)}100%{box-shadow:0 0 0 18px rgba(255,170,60,0)}}
+.comp h2{font-size:1.65rem}.comp h3{font-size:1.25rem}
+.comp h2.reveal,.comp h3.reveal{animation:revealInk 1.1s .15s ease-out both}
+@keyframes revealInk{from{clip-path:inset(0 100% 0 0);opacity:.4}to{clip-path:inset(0 0 0 0);opacity:1}}
+.kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#7d5a32}
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--serif);font-weight:700;font-size:.86rem;padding:2px 9px;border-radius:999px;border:1px solid}
+.badge.fact{color:#1f6a3e;background:rgba(80,170,110,.17);border-color:rgba(47,125,79,.55)}
+.badge.legend{color:#7a4a05;background:rgba(255,185,70,.25);border-color:rgba(190,120,25,.6)}
+.badge.sugg{color:#4c3c7a;background:rgba(130,110,200,.15);border-color:rgba(100,80,170,.5)}
+sup.cite{font-family:var(--mono);font-size:.68rem;margin-left:2px}
+sup.cite a{text-decoration:none;color:#8a4a14;border-bottom:1px dotted}
+.muted{color:var(--ink-soft);font-size:.9rem}
+/* place card */
+.place{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:center}
+@media(max-width:700px){.place{grid-template-columns:1fr}}
+.illus{border-radius:10px;overflow:hidden;border:2px solid #4a3017;box-shadow:0 0 0 3px rgba(255,235,190,.5),0 8px 20px rgba(0,0,0,.35);line-height:0;background:#150f1d}
+.illus svg{width:100%;height:auto;display:block}
+.place .why{font-size:1.05rem;margin:8px 0}
+/* haunt match */
+.gauge{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.gauge svg{width:230px;max-width:100%;overflow:visible}
+.gauge .num{font-family:var(--serif);font-weight:700;font-size:54px;fill:#3a220d}
+.gauge .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.14em;fill:#7d5a32}
+.hm-body{flex:1;min-width:220px}
+.hm-reason{font-size:1.08rem;font-style:italic}
+.lg-bars{margin-top:10px;display:grid;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;align-items:center;font-size:.85rem}
+.bar .track{grid-column:1/2;height:8px;border-radius:5px;background:rgba(90,60,25,.2);overflow:hidden}
+.bar .fill{height:100%;width:0;background:linear-gradient(90deg,#c9772b,#ffc65c);transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.recheck{display:inline-block;margin-bottom:6px;font-size:.84rem;padding:3px 10px;border-radius:8px;background:rgba(143,245,210,.25);border:1px solid #3fae93;color:#12503f;animation:flash 1.6s ease-out}
+/* weather */
+.wscene{position:relative;height:150px;border-radius:10px;overflow:hidden;border:2px solid #4a3017;margin:8px 0 12px;
+  background:linear-gradient(180deg,#0f1226,#2a2342 60%,#47345a);box-shadow:0 0 0 3px rgba(255,235,190,.45)}
+.wscene.day{background:linear-gradient(180deg,#6d86a8,#b8c4cc 70%,#d8cfb8)}
+.wscene .moon{position:absolute;right:9%;top:12%;font-size:46px;filter:drop-shadow(0 0 14px rgba(255,245,200,.8))}
+.wscene .fogl{position:absolute;left:-20%;width:140%;height:60px;border-radius:50%;filter:blur(14px);background:rgba(215,225,235,.7);animation:fogmove 14s ease-in-out infinite alternate}
+@keyframes fogmove{from{transform:translateX(-6%)}to{transform:translateX(8%)}}
+.wscene .wind{position:absolute;height:2px;width:90px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);animation:gust 2.4s linear infinite}
+@keyframes gust{from{transform:translateX(-120px)}to{transform:translateX(120vw)}}
+.wscene .drop{position:absolute;top:-10px;width:2px;height:14px;background:rgba(190,215,255,.75);animation:fall 0.9s linear infinite}
+@keyframes fall{to{transform:translateY(190px)}}
+.wscene .bolt{position:absolute;inset:0;background:#fff;opacity:0;animation:bolt 6s infinite}
+@keyframes bolt{0%,92%,96%,100%{opacity:0}93%{opacity:.75}94.5%{opacity:.1}95%{opacity:.6}}
+.wscene .tower{position:absolute;left:12%;bottom:0;font-size:38px;opacity:.9}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{padding:8px 10px;border-radius:8px;background:rgba(255,250,235,.5);border:1px solid var(--rule)}
+.stat b{display:block;font-family:var(--serif);font-size:1.35rem;color:#3a220d}
+.stat span{font-size:.76rem;color:#7d5a32;text-transform:uppercase;letter-spacing:.08em}
+.spooky{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.sp{padding:6px 12px;border-radius:10px;font-family:var(--serif);font-weight:700;font-size:1rem;color:#2a1c0c;background:linear-gradient(180deg,#ffdb8c,#e8a94a);border:1px solid #9b6a1f;box-shadow:0 0 12px rgba(255,170,50,.35)}
+.sp small{display:block;font-family:var(--body);font-weight:400;font-size:.72rem;color:#5b3d17}
+.confirm{margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(255,250,235,.55);border:1px dashed var(--rule)}
+.confirm li{list-style:none}.confirm ul{margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px}
+/* timeline */
+.tl{position:relative;margin:10px 0 0;padding:0 0 0 22px;list-style:none}
+.tl::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:linear-gradient(#a46a2a,#6b4220);opacity:.7}
+.tl li{position:relative;padding:0 0 16px;animation:inkIn .8s both}
+.tl li::before{content:"";position:absolute;left:-21px;top:6px;width:12px;height:12px;border-radius:50%;background:#e9b457;border:2px solid #6b4220;box-shadow:0 0 10px rgba(255,170,60,.7)}
+.tl .date{font-family:var(--mono);font-size:.76rem;color:#8a5a22;letter-spacing:.06em}
+.tl .ttl{font-family:var(--serif);font-weight:700;font-size:1.2rem;color:#341f0b}
+.tl p{margin:2px 0 4px}
+/* legend */
+.legend-card{background:linear-gradient(180deg,rgba(60,35,15,.12),rgba(255,230,170,.3));position:relative;overflow:hidden}
+.legend-card::after{content:"🕯️";position:absolute;right:14px;top:8px;font-size:30px;animation:flick 2.4s infinite;filter:drop-shadow(0 0 10px #ffb14a)}
+@keyframes flick{0%,100%{opacity:1;transform:scale(1)}30%{opacity:.75;transform:scale(.96) rotate(-2deg)}60%{opacity:1;transform:scale(1.04)}}
+.story{font-size:1.1rem;line-height:1.65;font-style:italic;border-left:3px solid var(--candle-dim);padding-left:14px;margin:10px 0}
+.story::first-letter{font-family:var(--serif);font-size:2.3em;float:left;line-height:.9;padding:3px 6px 0 0;color:#8a4a14}
+.conds{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+/* map */
+.map{height:320px;border-radius:10px;border:2px solid #4a3017;box-shadow:0 0 0 3px rgba(255,235,190,.45);margin-top:8px;z-index:0;background:#c9b88e}
+.map .leaflet-tile-pane{filter:sepia(.65) contrast(.95) saturate(.8)}
+.pin{font-size:30px;filter:drop-shadow(0 0 8px rgba(255,170,50,.9));text-align:center;line-height:30px}
+.pin.small{font-size:20px}
+/* nearby */
+.nb{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px}
+.nb article{padding:12px;border:1px solid var(--rule);border-radius:10px;background:rgba(255,250,235,.5)}
+.nb h3{font-size:1.2rem}
+/* sources */
+ol.src{margin:8px 0 0;padding-left:22px;font-size:.92rem}
+ol.src li{margin:3px 0;word-break:break-word}
+/* reports */
+.rep-list{list-style:none;margin:8px 0;padding:0;display:grid;gap:8px;max-height:340px;overflow:auto}
+.rep-list li{padding:9px 12px;border-radius:8px;border:1px solid var(--rule);background:rgba(255,250,235,.55);animation:inkIn .7s both}
+.rep-list li.new{box-shadow:0 0 0 2px var(--candle),0 0 18px rgba(255,170,60,.7)}
+.rep-list .who{font-family:var(--mono);font-size:.72rem;color:#7d5a32}
+.rep-form{display:flex;gap:8px;margin-top:6px}
+.rep-form input{flex:1;padding:9px 11px;border-radius:8px;border:1px solid #8a6a3e;background:#fff8e4;font:inherit;color:var(--ink)}
+.rep-form button{padding:0 16px;border-radius:8px;border:1px solid #6b4220;background:#e8b45a;font-family:var(--serif);font-weight:700;cursor:pointer;color:#2a1507}
+/* notes, choices */
+.note{border-style:dashed;background:rgba(196,85,58,.12);color:#5a2312}
+.choices{display:grid;gap:8px;margin-top:8px}
+.choices button{text-align:left;padding:10px 14px;border-radius:10px;border:1px solid #6b4220;background:#f7e6b8;font:inherit;cursor:pointer;color:var(--ink)}
+.choices button:hover{background:#ffe9a8;box-shadow:0 0 14px rgba(255,170,60,.5)}
+/* =====================================================================
+   HALLOWEEN THEMES: every Atlas component has its own spooky look
+   ===================================================================== */
+#log li.tool{color:#ffd37a}
+.bats{position:fixed;top:0;left:0;right:0;height:140px;pointer-events:none;z-index:2;overflow:hidden}
+.bats span{position:absolute;font-size:26px;left:-60px;animation:batfly 16s linear infinite;filter:drop-shadow(0 0 6px #000)}
+.bats span:nth-child(2){top:50px;font-size:20px;animation-duration:22s;animation-delay:-8s}
+.bats span:nth-child(3){top:20px;font-size:32px;animation-duration:28s;animation-delay:-15s}
+@keyframes batfly{0%{transform:translate(0,0) rotate(-5deg)}25%{transform:translate(28vw,26px) rotate(6deg)}50%{transform:translate(56vw,-8px) rotate(-6deg)}75%{transform:translate(84vw,22px) rotate(5deg)}100%{transform:translate(112vw,0) rotate(-3deg)}}
+h1.brand::before{content:"🎃 ";filter:drop-shadow(0 0 10px #ff8a1f)}h1.brand::after{content:" 🎃";filter:drop-shadow(0 0 10px #ff8a1f)}
+.comp{position:relative;overflow:hidden}
+.comp::before,.comp::after{position:absolute;pointer-events:none;line-height:1;z-index:0}
+.comp>*{position:relative;z-index:1}
+
+/* shared dark-card overrides */
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]) :is(h2,h3){color:#ffcf7a;text-shadow:0 0 12px rgba(255,150,40,.7)}
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]){color:#eadfc8}
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]) :is(.muted,.kicker){color:#b8a98c}
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]) a{color:#ffb86b}
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]) sup.cite a{color:#ffc98a}
+#atlas :is([data-key="PlaceCard"],[data-key="HauntMatch"],[data-key="WeatherPanel"],[data-key="Sources"],[data-key="ReportsFeed"]) .pill{background:rgba(255,200,120,.12);color:#f3dfb8;border-color:rgba(255,200,120,.4)}
+
+/* 1. PLACE: haunted mansion with an iron-gate frame */
+[data-key="PlaceCard"]{background:radial-gradient(ellipse at 20% 0,#3a2556,#16101f 70%);border:3px double #8a6ac0;box-shadow:0 0 0 2px #0d0813,0 0 28px rgba(150,100,220,.45),inset 0 0 40px rgba(0,0,0,.6)}
+[data-key="PlaceCard"]::before{content:"🦇";right:14px;top:8px;font-size:30px;animation:flick 3.5s infinite}
+[data-key="PlaceCard"]::after{content:"🕸️";left:0;bottom:0;font-size:46px;opacity:.55}
+[data-key="PlaceCard"] .illus{border-color:#8a6ac0;box-shadow:0 0 22px rgba(150,100,220,.6)}
+
+/* 2. HAUNT MATCH: bubbling witch's cauldron potion */
+[data-key="HauntMatch"]{background:radial-gradient(ellipse at 50% 120%,#1f6b3a 0,#0f2a1c 45%,#08140e 100%);border:3px solid #3ed07a;box-shadow:0 0 30px rgba(62,208,122,.45),inset 0 0 50px rgba(0,0,0,.6)}
+[data-key="HauntMatch"]::before{content:"🧪";right:16px;top:8px;font-size:30px;animation:flick 2.8s infinite}
+[data-key="HauntMatch"]::after{content:"○  ◦  ○   ◦  ○  ◦";left:14px;bottom:4px;font-size:18px;color:rgba(110,255,170,.55);letter-spacing:10px;animation:bubble 3.2s ease-in infinite}
+@keyframes bubble{from{transform:translateY(8px);opacity:0}30%{opacity:1}to{transform:translateY(-70px);opacity:0}}
+[data-key="HauntMatch"] .gauge .num{fill:#b8ffd2}[data-key="HauntMatch"] .gauge .lbl{fill:#7fd9a4}
+[data-key="HauntMatch"] .gauge svg path:first-child{stroke:rgba(110,255,170,.18)}
+[data-key="HauntMatch"] .bar .track{background:rgba(110,255,170,.15)}
+
+/* 3. WEATHER: graveyard under a stormy sky */
+[data-key="WeatherPanel"]{background:linear-gradient(180deg,#0a0e24,#1b1a3a 70%,#24203f);border:3px solid #4a5aa8;box-shadow:0 0 28px rgba(80,100,220,.4),inset 0 0 40px rgba(0,0,0,.6)}
+[data-key="WeatherPanel"]::after{content:"🪦  🪦    ✝️  🪦   🪦  ✝️  🪦";left:0;right:0;bottom:-4px;font-size:24px;letter-spacing:6px;white-space:nowrap;opacity:.5;text-align:center;filter:grayscale(.6)}
+[data-key="WeatherPanel"]::before{content:"🦉";right:16px;top:8px;font-size:28px}
+[data-key="WeatherPanel"] .stat{background:rgba(120,140,255,.1);border-color:rgba(140,160,255,.3)}
+[data-key="WeatherPanel"] .stat b{color:#cfe0ff}[data-key="WeatherPanel"] .stat span{color:#97a6d8}
+[data-key="WeatherPanel"] .confirm{background:rgba(120,140,255,.12);border-color:rgba(140,160,255,.4)}
+[data-key="WeatherPanel"] .wscene{margin-bottom:14px}
+[data-key="WeatherPanel"] :is(.spooky){padding-bottom:18px}
+
+/* 4. LEGENDS: jack-o'-lantern campfire tale */
+.legend-card{background:radial-gradient(ellipse at 100% 0,rgba(255,140,30,.35),rgba(60,25,5,.55) 60%,rgba(25,12,5,.7))!important;border:3px dashed #ff8a1f!important;color:#ffe9c8!important;box-shadow:0 0 30px rgba(255,120,20,.4),inset 0 0 40px rgba(0,0,0,.5)}
+.legend-card::after{content:"🎃"!important;font-size:40px!important;animation:flick 2.1s infinite;filter:drop-shadow(0 0 14px #ff7a00)!important}
+.legend-card::before{content:"🔥";left:12px;bottom:6px;font-size:22px;opacity:.7;animation:flick 1.6s infinite}
+.legend-card :is(h2,h3){color:#ffa63d!important;text-shadow:0 0 14px rgba(255,120,20,.9)!important}
+.legend-card .kicker,.legend-card .muted{color:#e0b98a!important}
+.legend-card .story{border-left-color:#ff8a1f;color:#fff0d8}
+.legend-card .story::first-letter{color:#ff9a2e;text-shadow:0 0 10px #ff6a00}
+.legend-card a{color:#ffbe73!important}.legend-card .pill{background:rgba(255,140,30,.15);color:#ffe2b8;border-color:rgba(255,140,30,.5)}
+.legend-card .badge.legend{color:#2a1200;background:#ffa63d;border-color:#ffd08a}
+
+/* 5. MAP: pirate-style cursed treasure map */
+[data-key="MapPin"]{background:linear-gradient(135deg,#d9bf86,#c4a66a 60%,#b08e52)!important;border:3px solid #6b4220;border-radius:6px 22px 8px 26px;box-shadow:inset 0 0 40px rgba(110,60,15,.6),0 6px 18px rgba(0,0,0,.4)}
+[data-key="MapPin"]::before{content:"☠️";right:16px;top:8px;font-size:30px;opacity:.8}
+[data-key="MapPin"]::after{content:"✖ X marks the haunt";right:14px;bottom:10px;font-family:var(--serif);font-style:italic;font-size:1rem;color:#8a1f12;transform:rotate(-4deg);z-index:2;text-shadow:0 0 6px rgba(255,255,255,.5)}
+[data-key="MapPin"] .map{border:3px dashed #6b4220}
+
+/* 6. TIMELINE: cobwebbed crypt scroll */
+[data-key="Timeline"]{background:linear-gradient(180deg,#d8d0bb,#c7bd9f)!important;border:3px solid #5a5242;box-shadow:inset 0 0 40px rgba(60,50,30,.5),0 6px 18px rgba(0,0,0,.35)}
+[data-key="Timeline"]::before{content:"";left:0;top:0;width:150px;height:150px;opacity:.55;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23444' stroke-width='.8'><path d='M0 0 L100 0 M0 0 L90 40 M0 0 L65 65 M0 0 L40 90 M0 0 L0 100'/><path d='M20 0 Q18 18 0 20 M40 0 Q34 34 0 40 M60 0 Q50 50 0 60 M80 0 Q66 66 0 80'/></svg>") no-repeat}
+[data-key="Timeline"]::after{content:"💀";right:16px;top:8px;font-size:28px;opacity:.75}
+[data-key="Timeline"] .tl::before{background:repeating-linear-gradient(#5a5242 0 6px,transparent 6px 10px);width:3px}
+[data-key="Timeline"] .tl li::before{background:#efe8d4;border-color:#3b3427;box-shadow:0 0 8px rgba(255,255,255,.8)}
+
+/* 7. NEARBY: tombstone cards in a graveyard */
+[data-key="NearbyHaunts"]{background:linear-gradient(180deg,#1a2220,#0f1513)!important;border:3px solid #55705f;color:#d7e4da;box-shadow:0 0 24px rgba(90,140,110,.35),inset 0 0 40px rgba(0,0,0,.6)}
+[data-key="NearbyHaunts"] :is(h2){color:#a8ffcc;text-shadow:0 0 12px rgba(100,255,170,.6)}
+[data-key="NearbyHaunts"]::before{content:"🎃  🌿";right:16px;top:8px;font-size:24px}
+[data-key="NearbyHaunts"] .kicker,[data-key="NearbyHaunts"] .muted{color:#9fb8a8}
+[data-key="NearbyHaunts"] .nb article{background:linear-gradient(#9aa5a0,#6f7a75);color:#161c19;border:2px solid #3f4a45;border-radius:70px 70px 10px 10px;padding:34px 18px 16px;text-align:center;box-shadow:inset 0 0 18px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.5)}
+[data-key="NearbyHaunts"] .nb article::before{content:"R.I.P.";display:block;font-family:var(--serif);font-weight:700;letter-spacing:.2em;font-size:.8rem;color:#2c3531;margin:-22px 0 6px}
+[data-key="NearbyHaunts"] .nb h3{color:#101512;text-shadow:none}
+[data-key="NearbyHaunts"] a{color:#6b2a05}
+[data-key="NearbyHaunts"] .muted{color:#2f3b35}
+
+/* 8. SOURCES: the leather spellbook (grimoire) */
+[data-key="Sources"]{background:linear-gradient(135deg,#3b2316,#24140c)!important;border:4px double #c9a24a;border-radius:10px 18px 18px 10px;box-shadow:inset 8px 0 0 #1a0e08,0 0 22px rgba(201,162,74,.35)}
+[data-key="Sources"]::before{content:"📖";right:16px;top:8px;font-size:28px}
+[data-key="Sources"] h3{font-variant:small-caps;letter-spacing:.08em}
+[data-key="Sources"] ol.src li::marker{color:#c9a24a;font-weight:700}
+
+/* 9. REPORTS: séance / spirit-board messages */
+[data-key="ReportsFeed"]{background:radial-gradient(ellipse at 50% 0,#2d1450,#120a22 75%)!important;border:3px solid #9b5de5;box-shadow:0 0 30px rgba(155,93,229,.5),inset 0 0 40px rgba(0,0,0,.6)}
+[data-key="ReportsFeed"]::before{content:"🔮";right:16px;top:8px;font-size:30px;animation:flick 3s infinite;filter:drop-shadow(0 0 10px #b57bff)}
+[data-key="ReportsFeed"] .rep-list li{background:rgba(155,93,229,.15);border-color:rgba(190,140,255,.5);color:#efe4ff;border-radius:16px 16px 16px 2px}
+[data-key="ReportsFeed"] .rep-list .who{color:#c9a8ff}
+[data-key="ReportsFeed"] .rep-form input{background:#1a0e30;color:#efe4ff;border-color:#9b5de5}
+[data-key="ReportsFeed"] .rep-form button{background:#9b5de5;color:#fff;border-color:#c9a8ff}
+
+/* the user's own message: a raven's letter */
+#banner{border-left:4px solid #6b4220;background:rgba(40,20,10,.12)}
+#banner::before{content:"🪶 A raven delivered your message:";display:block;font-style:normal;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:#7d5a32;margin-bottom:2px}
+
+footer{margin-top:26px;text-align:center;color:#8f8068;font-size:.82rem}
+footer a{color:#c9b58a}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .fog,.bats{display:none}
+  .wscene .wind,.wscene .drop{display:none}
+}
+</style>
+</head>
+<body>
+<div class="fog" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="bats" aria-hidden="true"><span>🦇</span><span>🦇</span><span>🦇</span></div>
+<div class="wrap">
+  <header class="top">
+    <h1 class="brand">GHOST<span>CAST</span></h1>
+    <p class="tag">The Haunted Atlas: tell us where you are, and we'll chart what lingers there.</p>
+    <span class="conn"><span class="dot" id="dot"></span><span id="connTxt">connecting…</span></span>
+  </header>
+
+  <form class="summon" id="form" autocomplete="off">
+    <div class="row">
+      <label class="sr" for="msg">Describe the spooky place around you</label>
+      <textarea id="msg" maxlength="600" placeholder="Describe the spooky place around you…  (e.g. thick fog, howling wind, old stone castle on a hill in Scotland)"></textarea>
+      <button class="go" id="go" type="submit">Summon the Atlas</button>
+    </div>
+    <div class="chips" id="chips"><span class="lbl">Try one:</span></div>
+    <div class="chips"><label class="demo-toggle"><input type="checkbox" id="demo"> <span id="demoLbl">Demo mode</span></label></div>
+    <p class="hint" id="hint"></p>
+  </form>
+
+  <main class="grid">
+    <aside class="log" aria-label="Transmission log">
+      <h2>▸ Transmission Log</h2>
+      <ol id="log" aria-live="polite"></ol>
+    </aside>
+
+    <section id="atlasWrap" aria-label="Haunted Atlas page">
+      <div id="banner"></div>
+      <div id="atlas">
+        <div class="empty" id="empty">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#6b4a26" stroke-width="2"/><circle cx="50" cy="50" r="36" fill="none" stroke="#6b4a26" stroke-width="1" stroke-dasharray="3 3"/><path d="M50 8 L56 50 L50 92 L44 50 Z" fill="#8a4a14" opacity=".8"/><path d="M8 50 L50 44 L92 50 L50 56 Z" fill="#6b4a26" opacity=".6"/><circle cx="50" cy="50" r="4" fill="#ffd27a" stroke="#6b4a26"/></svg>
+          <div>The atlas is blank…</div>
+          <div class="muted">Describe a spooky place above, or tap an example, and watch the page ink itself in.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>✅ <b>Real history</b> comes from sources. 🕯️ <b>Legends</b> are folklore, told for fun. Every item links to where it came from.</p>
+    <p>Weather by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · Maps © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Research by You.com · Stories shaped by AI</p>
+  </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isHttp = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+/* tiny safe DOM builder: text is always textContent, never HTML */
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) { if (kid == null || kid === false) continue; e.append(kid.nodeType ? kid : document.createTextNode(String(kid))); }
+  return e;
+}
+const svgEl = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const [k, v] of Object.entries(attrs || {})) e.setAttribute(k, v); return e; };
+
+/* ---------------- state ---------------- */
+const SPOOKY_TAG = {
+  fog: ['🌫️', 'Phantom Fog'], full_moon: ['🐺', 'Werewolf Activity HIGH'], strong_wind: ['💨', 'Banshee Winds'],
+  cold: ['🥶', 'Cold Spot Alert'], storm: ['⚡', 'Frankenstein Conditions'], new_moon: ['🌑', 'Darkest Night'], rain: ['🌧️', 'Weeping Skies'],
+};
+const ORDER = ['PlaceCard', 'HauntMatch', 'WeatherPanel', 'Legend', 'MapPin', 'Timeline', 'NearbyHaunts', 'Sources', 'ReportsFeed'];
+let S, slots, ws, config = { live: false, chips: [] }, retry = 0, map = null, mapLayer = null, mapBox = null;
+function resetState() {
+  S = { clues: null, place: null, weather: null, history: [], legends: [], haunt: null, nearby: [], reports: [], titles: new Map(), cited: [], layout: false, haveReports: false, seenReports: new Set() };
+  slots = new Map();
+  if (map) { map.remove(); map = null; mapLayer = null; }
+}
+resetState();
+const atlas = $('#atlas'), logEl = $('#log'), banner = $('#banner');
+
+/* ---------------- citations ---------------- */
+function addTitles(list) { for (const s of list || []) if (isHttp(s.url)) S.titles.set(s.url, s.title); }
+function cite(url) {
+  if (!isHttp(url)) return null;
+  let i = S.cited.indexOf(url);
+  if (i < 0) { S.cited.push(url); i = S.cited.length - 1; queueMicrotask(renderSources); }
+  return h('sup', { class: 'cite' }, h('a', { href: url, target: '_blank', rel: 'noopener noreferrer', title: S.titles.get(url) || url, 'aria-label': 'Source ' + (i + 1) }, '[' + (i + 1) + ']'));
+}
+
+/* ---------------- transmission log ---------------- */
+const pending = new Map();
+function ts() { return new Date().toTimeString().slice(0, 8); }
+function log(text, cls = '') { const li = h('li', { class: cls }, h('span', { class: 't' }, ts()), text); logEl.append(li); logEl.scrollTop = logEl.scrollHeight; return li; }
+function logPending(step, text) { clearPending(step); pending.set(step, log(text, 'pend')); }
+function clearPending(step, ok = false) { const li = pending.get(step); if (li) { li.classList.remove('pend'); if (ok) li.classList.add('ok'); pending.delete(step); } }
+const stepDone = (step, text) => { const li = pending.get(step); if (li) { li.lastChild.textContent = text; clearPending(step, true); } else log(text, 'ok'); };
+
+/* ---------------- slot mounting ---------------- */
+function orderOf(key) {
+  const base = key.startsWith('Legend:') ? 'Legend' : key;
+  const i = ORDER.indexOf(base);
+  return (i < 0 ? 50 : i) * 10 + (key.startsWith('Legend:') ? (S.legends.findIndex((l) => 'Legend:' + l.id === key) + 1) : 0);
+}
+function mount(key, node, cls = '') {
+  const empty = $('#empty'); if (empty) empty.remove();
+  let sec = slots.get(key); const isNew = !sec;
+  if (!sec) { sec = h('section', { class: 'comp ' + cls, 'data-key': key }); sec.style.order = orderOf(key); atlas.append(sec); slots.set(key, sec); sec.classList.add('ink-in'); }
+  sec.replaceChildren(node);
+  if (!isNew && !REDUCED) { sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash'); }
+  return sec;
+}
+function tween(from, to, ms, cb) {
+  if (REDUCED) return cb(to);
+  const t0 = performance.now();
+  (function f(t) { const k = Math.min(1, (t - t0) / ms); cb(from + (to - from) * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(t0);
+}
+
+/* ---------------- illustrations (original SVG, no copied photos) ---------------- */
+function illustration(kind) {
+  const sky = '<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1030"/><stop offset=".65" stop-color="#3a2a58"/><stop offset="1" stop-color="#7a4a5e"/></linearGradient><radialGradient id="mn"><stop offset="0" stop-color="#fff8dc"/><stop offset="1" stop-color="#fff8dc" stop-opacity="0"/></radialGradient></defs>'
+    + '<rect width="400" height="200" fill="url(#sk)"/><circle cx="330" cy="46" r="40" fill="url(#mn)" opacity=".7"/><circle cx="330" cy="46" r="15" fill="#fff4c9"/>'
+    + '<g fill="#fff" opacity=".8"><circle cx="40" cy="30" r="1.2"/><circle cx="90" cy="60" r="1"/><circle cx="150" cy="22" r="1.4"/><circle cx="220" cy="48" r="1"/><circle cx="270" cy="20" r="1.2"/><circle cx="20" cy="90" r="1"/></g>';
+  const ground = (c = '#120b1a') => `<path d="M0 200 V168 Q70 150 140 165 T290 160 T400 168 V200Z" fill="${c}"/>`;
+  const win = (x, y) => `<rect x="${x}" y="${y}" width="5" height="9" rx="2" fill="#ffc65c"/>`;
+  const cren = (x, y, w, n) => Array.from({ length: n }, (_, i) => `<rect x="${x + i * (w / n)}" y="${y - 6}" width="${w / n / 2}" height="7" fill="#1b1224"/>`).join('');
+  const art = {
+    castle: `<path d="M20 200 L60 120 L140 100 L260 104 L340 130 L380 200Z" fill="#1a1222"/>
+      <rect x="110" y="62" width="180" height="50" fill="#241a30"/>${cren(110, 62, 180, 12)}
+      <rect x="92" y="38" width="34" height="76" fill="#2a1f38"/>${cren(92, 38, 34, 4)}<rect x="274" y="48" width="34" height="66" fill="#2a1f38"/>${cren(274, 48, 34, 4)}
+      <rect x="180" y="24" width="40" height="88" fill="#2d2140"/><path d="M176 24 L200 0 L224 24Z" fill="#1b1224"/>
+      ${win(105, 60)}${win(288, 70)}${win(196, 50)}${win(196, 78)}${win(140, 80)}${win(240, 82)}${ground('#0e0814')}`,
+    lighthouse: `<rect y="168" width="400" height="32" fill="#0c1430"/><path d="M0 175 q25-8 50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0 t50 0" stroke="#5b79b8" stroke-width="2" fill="none" opacity=".7"/>
+      <path d="M130 200 L150 150 L250 150 L270 200Z" fill="#150e1c"/><path d="M170 150 L180 40 L220 40 L230 150Z" fill="#e8e0d0"/><path d="M174 110 L226 110 L224 128 L176 128Z" fill="#a33a2a"/><path d="M178 66 L222 66 L221 82 L179 82Z" fill="#a33a2a"/>
+      <rect x="172" y="30" width="56" height="12" fill="#2a2030"/><rect x="180" y="14" width="40" height="16" fill="#ffd36e"/><path d="M196 4 L204 4 L212 14 L188 14Z" fill="#2a2030"/>
+      <path d="M220 22 L400 -10 L400 52Z" fill="#fff3b0" opacity=".28"/><path d="M180 22 L0 -6 L0 50Z" fill="#fff3b0" opacity=".16"/>`,
+    prison: `<rect y="150" width="400" height="50" fill="#120b1a"/><rect x="40" y="96" width="320" height="64" fill="#2a2036"/>${cren(40, 96, 320, 22)}
+      <rect x="30" y="58" width="44" height="102" fill="#33283f"/>${cren(30, 58, 44, 5)}<rect x="326" y="58" width="44" height="102" fill="#33283f"/>${cren(326, 58, 44, 5)}
+      <path d="M170 96 V60 Q200 28 230 60 V96Z" fill="#3a2e48"/><rect x="196" y="10" width="8" height="26" fill="#2a2036"/><circle cx="200" cy="52" r="8" fill="#ffc65c" opacity=".8"/>
+      <g fill="#150e1c">${Array.from({ length: 10 }, (_, i) => `<rect x="${58 + i * 29}" y="116" width="9" height="18" rx="4"/>`).join('')}</g>${win(46, 76)}${win(342, 76)}`,
+    church: `<path d="M0 200 V160 Q100 140 200 158 T400 156 V200Z" fill="#120b1a"/><rect x="120" y="100" width="150" height="62" fill="#2a2036"/><path d="M110 100 L195 62 L280 100Z" fill="#1b1224"/>
+      <rect x="276" y="50" width="34" height="112" fill="#33283f"/><path d="M272 50 L293 6 L314 50Z" fill="#1b1224"/><rect x="291" y="-2" width="4" height="14" fill="#1b1224"/>
+      <path d="M152 162 V132 Q162 118 172 132 V162Z" fill="#ffc65c" opacity=".85"/><path d="M212 162 V132 Q222 118 232 132 V162Z" fill="#ffc65c" opacity=".7"/>`,
+    cemetery: `<path d="M0 200 V160 Q100 148 200 158 T400 154 V200Z" fill="#120b1a"/>${[40, 100, 170, 240, 310].map((x, i) => `<path d="M${x} 170 V${140 - i % 2 * 8} Q${x + 12} ${126 - i % 2 * 8} ${x + 24} ${140 - i % 2 * 8} V170Z" fill="#3a2e48"/>`).join('')}
+      <path d="M338 170 V120 M326 134 H350" stroke="#3a2e48" stroke-width="6"/><path d="M60 160 q-10-70 20-100 q-4 30 20 40" stroke="#1b1224" stroke-width="5" fill="none"/>`,
+    ruins: `<path d="M0 200 V165 Q100 150 200 162 T400 158 V200Z" fill="#120b1a"/><path d="M90 168 V90 Q130 40 170 90 V168 H150 V96 Q130 66 110 96 V168Z" fill="#2a2036"/>
+      <path d="M220 168 V110 L232 96 L244 108 L256 90 V168Z" fill="#33283f"/><rect x="288" y="130" width="40" height="38" fill="#2a2036"/>`,
+  };
+  art.house = art.church; art.other = art.ruins;
+  return sky + (art[kind] || art.other) + (kind === 'castle' || kind === 'lighthouse' ? '' : '');
+}
+function illusNode(kind) { const d = h('div', { class: 'illus', role: 'img', 'aria-label': 'Illustration of a ' + kind + ' under the moon' }); d.innerHTML = '<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">' + illustration(kind) + '</svg>'; return d; }
+
+/* ---------------- components ---------------- */
+function renderPlace(p) {
+  const conf = typeof p.confidence === 'number' ? Math.round(p.confidence * 100) : null;
+  mount('PlaceCard', h('div', { class: 'place' },
+    illusNode(p.kind),
+    h('div', null,
+      h('div', { class: 'kicker' }, '📍 ' + (p.kind || 'place')),
+      h('h2', { class: 'reveal', text: p.name }),
+      h('div', { class: 'muted' }, p.region),
+      h('p', { class: 'why' }, p.why_famous || p.short, cite(p.source)),
+      p.short && p.why_famous ? h('p', { class: 'muted' }, p.short) : null,
+      conf != null ? h('span', { class: 'pill' }, 'Match confidence ' + conf + '%') : null)));
+  renderMap();
+}
+
+function renderMap() {
+  const p = S.place; if (!p) return;
+  let sec = slots.get('MapPin');
+  if (!sec) {
+    mapBox = h('div', { class: 'map', id: 'map', role: 'application', 'aria-label': 'Map of ' + p.name });
+    mount('MapPin', h('div', null, h('div', { class: 'kicker' }, '🗺️ Where it is'), h('h3', { text: 'On the map' }), mapBox,
+      h('div', { class: 'muted', style: 'margin-top:6px' }, p.lat.toFixed(4) + '°, ' + p.lon.toFixed(4) + '°  · pin and tiles by OpenStreetMap')));
+    requestAnimationFrame(() => {
+      if (!window.L) { mapBox.textContent = 'The map tiles need an internet connection. Coordinates: ' + p.lat + ', ' + p.lon; mapBox.style.padding = '16px'; return; }
+      map = L.map(mapBox, { scrollWheelZoom: false }).setView([p.lat, p.lon], 13);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(map);
+      mapLayer = L.layerGroup().addTo(map);
+      L.marker([p.lat, p.lon], { icon: L.divIcon({ className: '', html: '<div class="pin">👻</div>', iconSize: [30, 30], iconAnchor: [15, 28] }), title: p.name }).addTo(map).bindPopup('<b></b>').getPopup().setContent(Object.assign(document.createElement('b'), { textContent: p.name }));
+      setTimeout(() => map && map.invalidateSize(), 500);
+      renderNearbyPins();
+    });
+  } else renderNearbyPins();
+}
+function renderNearbyPins() {
+  if (!map || !mapLayer) return;
+  mapLayer.clearLayers();
+  const pts = [[S.place.lat, S.place.lon]];
+  for (const n of S.nearby) if (typeof n.lat === 'number' && typeof n.lon === 'number') {
+    const pop = document.createElement('b'); pop.textContent = n.name;
+    L.marker([n.lat, n.lon], { icon: L.divIcon({ className: '', html: '<div class="pin small">🕯️</div>', iconSize: [20, 20], iconAnchor: [10, 18] }) }).addTo(mapLayer).bindPopup(pop);
+    pts.push([n.lat, n.lon]);
+  }
+  if (pts.length > 1) { const near = pts.filter((p) => Math.abs(p[0] - S.place.lat) < 3 && Math.abs(p[1] - S.place.lon) < 4); if (near.length > 1) map.fitBounds(near, { padding: [40, 40], maxZoom: 14 }); }
+}
+
+function renderWeather(w) {
+  const night = !w.is_day;
+  const scene = h('div', { class: 'wscene' + (night ? '' : ' day'), 'aria-hidden': 'true' });
+  scene.append(h('div', { class: 'moon' }, night ? w.moon.emoji : '☁️'));
+  const tags = new Set(w.tags);
+  const fogAmt = tags.has('fog') ? 1 : Math.max(0, Math.min(0.8, 1 - (w.visibility_m || 10000) / 9000));
+  for (let i = 0; i < 3; i++) { const f = h('div', { class: 'fogl' }); f.style.bottom = (i * 24 - 10) + 'px'; f.style.opacity = String((0.25 + fogAmt * 0.65) * (1 - i * 0.2)); f.style.animationDelay = (-i * 4) + 's'; scene.append(f); }
+  const nWind = Math.min(12, Math.round((w.gust_kmh || w.wind_kmh || 0) / 7));
+  for (let i = 0; i < nWind; i++) { const l = h('div', { class: 'wind' }); l.style.top = (8 + Math.random() * 120) + 'px'; l.style.animationDuration = (3.6 - Math.min(2.2, (w.wind_kmh || 0) / 30)) + 's'; l.style.animationDelay = (-Math.random() * 3) + 's'; scene.append(l); }
+  if (tags.has('rain')) for (let i = 0; i < 26; i++) { const d = h('div', { class: 'drop' }); d.style.left = (Math.random() * 100) + '%'; d.style.animationDelay = (-Math.random()) + 's'; scene.append(d); }
+  if (tags.has('storm')) scene.append(h('div', { class: 'bolt' }));
+  scene.append(h('div', { class: 'tower' }, '🏚️'));
+
+  const conf = w.match;
+  const confirm = conf && conf.items.length ? h('div', { class: 'confirm' }, h('b', null, conf.summary), h('ul', null, conf.items.map((i) => h('li', null, (i.confirmed ? '✅ ' : '❌ ') + i.text)))) : null;
+  mount('WeatherPanel', h('div', null,
+    h('div', { class: 'kicker' }, '🌡️ Weather right now'),
+    h('h2', { class: 'reveal', text: 'Tonight at the spot' }),
+    scene,
+    h('div', { class: 'stats' },
+      stat(Math.round(w.temperature_c) + '°C', 'Feels ' + Math.round(w.apparent_c) + '°C'),
+      stat(Math.round(w.wind_kmh) + ' km/h', 'Gusts ' + Math.round(w.gust_kmh)),
+      stat(((w.visibility_m || 0) / 1000).toFixed(1) + ' km', 'Visibility'),
+      stat((w.precip_mm || 0) + ' mm', 'Precipitation'),
+      stat(w.cloud_pct + '%', 'Cloud cover'),
+      stat(w.moon.emoji + ' ' + Math.round(w.moon.illumination * 100) + '%', w.moon.name)),
+    h('div', { class: 'spooky' }, w.labels.map((l) => h('div', { class: 'sp', title: l.detail }, l.icon + ' ' + l.label, h('small', null, l.detail)))),
+    confirm,
+    h('p', { class: 'muted', style: 'margin:10px 0 0' }, (w.source === 'sample' ? 'Sample weather: a recorded spooky night used in demo mode (turn Demo off for the real sky). ' : 'Live reading' + (w.as_of ? ' · ' + w.as_of.replace('T', ' ') + ' local' : '') + '. '), 'Moon phase computed on this server. ', cite(w.credit && w.credit.url))));
+}
+const stat = (b, s) => h('div', { class: 'stat' }, h('b', null, b), h('span', null, s));
+
+function renderTimeline(events) {
+  mount('Timeline', h('div', null,
+    h('div', { class: 'kicker' }, '⏳ Oldest to newest'),
+    h('h2', { class: 'reveal', text: 'What really happened' }),
+    h('ol', { class: 'tl' }, events.map((e, i) => {
+      const li = h('li', null,
+        h('div', { class: 'date' }, e.date),
+        h('div', { class: 'ttl' }, e.title, ' ', h('span', { class: 'badge fact' }, '✅ Real history')),
+        h('p', null, e.text, cite(e.source)));
+      li.style.animationDelay = REDUCED ? '0s' : (i * 0.22) + 's';
+      return li;
+    }))));
+}
+
+function renderLegend(lg) {
+  const conds = (lg.conditions || []).map((c) => SPOOKY_TAG[c] ? h('span', { class: 'pill', title: 'Weather this tale is linked to' }, SPOOKY_TAG[c][0] + ' ' + SPOOKY_TAG[c][1]) : null);
+  const sec = mount('Legend:' + lg.id, h('div', null,
+    h('div', { class: 'kicker' }, 'Campfire tale'),
+    h('h2', { class: 'reveal', text: lg.title }),
+    h('span', { class: 'badge legend' }, '🕯️ Legend'),
+    h('p', { class: 'story' }, lg.story, cite(lg.source)),
+    h('div', { class: 'conds' }, h('span', { class: 'muted' }, 'Linked weather:'), conds.length ? conds : h('span', { class: 'pill' }, 'none recorded')),
+    lg.conditions_note ? h('p', { class: 'muted' }, lg.conditions_note) : null), 'legend-card');
+  sec.classList.add('legend-card');
+}
+
+function gaugeColor(s) { return s < 34 ? '#4a6fa5' : s < 67 ? '#d08a2a' : '#2fa77d'; }
+function renderHaunt(hm) {
+  const prev = S.haunt ? S.haunt.score : 0;
+  const R = 90, L = Math.PI * R;
+  const svg = svgEl('svg', { viewBox: '0 0 200 130', role: 'meter', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': hm.score, 'aria-label': 'Haunt Match' });
+  const bg = svgEl('path', { d: 'M10 105 A90 90 0 0 1 190 105', fill: 'none', stroke: 'rgba(90,60,25,.25)', 'stroke-width': 16, 'stroke-linecap': 'round' });
+  const fg = svgEl('path', { d: 'M10 105 A90 90 0 0 1 190 105', fill: 'none', stroke: gaugeColor(hm.score), 'stroke-width': 16, 'stroke-linecap': 'round', 'stroke-dasharray': L, 'stroke-dashoffset': L * (1 - prev / 100), style: 'filter:drop-shadow(0 0 6px rgba(255,170,60,.7))' });
+  const num = svgEl('text', { x: 100, y: 96, 'text-anchor': 'middle', class: 'num' }); num.textContent = prev;
+  const lbl = svgEl('text', { x: 100, y: 120, 'text-anchor': 'middle', class: 'lbl' }); lbl.textContent = 'HAUNT MATCH / 100';
+  svg.append(bg, fg, num, lbl);
+  const bars = (hm.per_legend || []).length > 1 ? h('div', { class: 'lg-bars' }, hm.per_legend.map((p) => {
+    const fill = h('div', { class: 'fill' }); setTimeout(() => { fill.style.width = p.score + '%'; }, 60);
+    return h('div', { class: 'bar' }, h('span', null, p.title), h('b', { style: 'text-align:right' }, p.score), h('div', { class: 'track' }, fill));
+  })) : null;
+  mount('HauntMatch', h('div', null,
+    h('div', { class: 'kicker' }, '👻 Does tonight match the legend?'),
+    h('h2', { class: 'reveal', text: 'Haunt Match' }),
+    h('div', { class: 'gauge' }, svg, h('div', { class: 'hm-body' },
+      hm.recheck ? h('div', { class: 'recheck' }, '🔔 Re-checked after a new report from ' + (hm.trigger && hm.trigger.who)) : null,
+      h('div', { class: 'muted' }, 'Best match: ', h('b', null, hm.title)),
+      h('p', { class: 'hm-reason' }, hm.reason), bars))));
+  tween(prev, hm.score, 1600, (v) => { const r = Math.round(v); num.textContent = r; fg.setAttribute('stroke-dashoffset', L * (1 - v / 100)); });
+  fg.setAttribute('stroke', gaugeColor(hm.score));
+  S.haunt = hm;
+}
+
+function renderNearby(list) {
+  if (!list.length) { const s = slots.get('NearbyHaunts'); if (s) { s.remove(); slots.delete('NearbyHaunts'); } return; }
+  mount('NearbyHaunts', h('div', null,
+    h('div', { class: 'kicker' }, '🧭 Keep exploring'),
+    h('h2', { class: 'reveal', text: 'Nearby haunts' }),
+    h('div', { class: 'nb' }, list.map((n) => h('article', null,
+      h('h3', { text: n.name }),
+      h('span', { class: 'badge legend' }, '🕯️ Legend'),
+      h('p', null, n.legend, cite(n.source)),
+      h('p', { class: 'muted' }, h('span', { class: 'badge sugg' }, '💡 Suggestion'), ' Best night: ', n.best_night))))));
+  renderNearbyPins();
+}
+
+function renderSources() {
+  if (!S.cited.length) return;
+  mount('Sources', h('div', null,
+    h('div', { class: 'kicker' }, '📚 Where this came from'),
+    h('h3', { text: 'Sources' }),
+    h('ol', { class: 'src' }, S.cited.map((u) => h('li', null, h('a', { href: u, target: '_blank', rel: 'noopener noreferrer' }, S.titles.get(u) || u), h('div', { class: 'muted' }, u))))));
+}
+
+function ago(ts) { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; }
+function reportItem(r, fresh) {
+  return h('li', { class: fresh ? 'new' : '', 'data-id': r.id },
+    h('div', { class: 'who' }, (r.mine ? '★ You' : r.who) + ' · ' + ago(r.ts)),
+    h('div', null, r.text),
+    r.weather && r.weather.length ? h('div', { style: 'margin-top:4px;display:flex;gap:6px;flex-wrap:wrap' }, r.weather.map((t) => SPOOKY_TAG[t] ? h('span', { class: 'pill' }, SPOOKY_TAG[t][0] + ' ' + SPOOKY_TAG[t][1]) : null)) : null);
+}
+function renderReports() {
+  if (!S.haveReports) return;
+  const list = h('ul', { class: 'rep-list', 'aria-live': 'polite' }, [...S.reports].reverse().slice(0, 25).map((r) => reportItem(r, false)));
+  const input = h('input', { type: 'text', maxlength: 280, placeholder: 'What is the weather like where you are? (e.g. fog rolling in)', 'aria-label': 'Add a report' });
+  const form = h('form', { class: 'rep-form', onsubmit: (e) => { e.preventDefault(); const t = input.value.trim(); if (t.length < 3 || !ws || ws.readyState !== 1) return; ws.send(JSON.stringify({ type: 'report', text: t })); input.value = ''; } }, input, h('button', { type: 'submit' }, 'Report'));
+  mount('ReportsFeed', h('div', null,
+    h('div', { class: 'kicker' }, '📡 Live from other explorers'),
+    h('h3', { text: 'Reports feed' }),
+    h('p', { class: 'muted' }, 'Everyone looking at this place sees new reports instantly. If one mentions different weather, the Haunt Match re-checks.'),
+    list, form));
+}
+function pushReport(r) {
+  if (S.seenReports.has(r.id)) return; S.seenReports.add(r.id); S.reports.push(r);
+  const sec = slots.get('ReportsFeed'); if (!sec) return renderReports();
+  const list = $('.rep-list', sec); if (list) list.prepend(reportItem(r, true));
+}
+
+/* ---------------- event handling ---------------- */
+function note(text, fatal) {
+  mount('Note:' + Math.random().toString(36).slice(2, 6), h('div', null, h('b', null, '🕯️ ' + text)), 'note');
+}
+const handlers = {
+  hello(d) { config.live = d.live; },
+  received(d) {
+    resetState(); atlas.replaceChildren(); logEl.replaceChildren(); pending.clear();
+    banner.style.display = 'block'; banner.replaceChildren(h('div', null, '“' + d.text + '”'), h('div', { class: 'cl', id: 'cl' }, h('span', { class: 'pill' }, d.mode === 'demo' ? '🎬 demo replay' : '🛰️ live research')));
+    log('Transmission received (' + d.text.length + ' chars, ' + d.mode + ' mode)', 'ok');
+  },
+  progress(d) { logPending(d.step, d.text); },
+  trace(d) { log('🔧 ' + d.tool + ' · ' + d.detail + ' (' + (d.ms / 1000).toFixed(1) + 's)', 'tool'); },
+  clues(d) {
+    S.clues = d; clearPending('clues');
+    log('Clues found: “' + d.place_guess + '”, ' + (d.described_weather.join(', ') || 'no weather words') + ' · mood: ' + d.mood, 'ok');
+    const cl = $('#cl'); if (cl) for (const c of [...d.spooky_clues, ...d.described_weather]) cl.append(h('span', { class: 'pill' }, c));
+  },
+  place(d) { S.place = d; addTitles(d.sources); stepDone('place', 'Place located: ' + d.name + ' (' + d.lat.toFixed(2) + ', ' + d.lon.toFixed(2) + ')'); renderPlace(d); },
+  weather(d) {
+    S.weather = d; addTitles(d.sources);
+    stepDone('weather', 'Weather read: ' + Math.round(d.temperature_c) + '°C, wind ' + Math.round(d.wind_kmh) + ' km/h, ' + d.moon.name + (d.match && d.match.confirmed === true ? ' · Conditions confirmed ✅' : ''));
+    renderWeather(d);
+  },
+  history(d) { S.history = d.events; addTitles(d.sources); stepDone('history', 'History decoded: ' + d.events.length + ' dated events ✅'); renderTimeline(d.events); },
+  legends(d) { S.legends = d.legends; addTitles(d.sources); stepDone('legends', 'Legends gathered: ' + d.legends.length + ' 🕯️'); d.legends.forEach(renderLegend); },
+  haunt_match(d) {
+    if (d.recheck) log('🔔 Haunt Match re-checked: ' + d.score + '/100 (new report from ' + d.trigger.who + ')', 'warn');
+    else stepDone('haunt_match', 'Haunt Match: ' + d.score + '/100');
+    renderHaunt(d);
+  },
+  nearby(d) { S.nearby = d.places; addTitles(d.sources); stepDone('nearby', 'Neighbouring haunts found: ' + d.places.length); renderNearby(d.places); },
+  reports(d) { S.reports = d.reports.slice(); S.seenReports = new Set(S.reports.map((r) => r.id)); S.haveReports = true; log('Joined the live feed for ' + d.place + ' (' + d.reports.length + ' earlier reports)', 'ok'); renderReports(); },
+  report(d) { if (!S.haveReports) { S.haveReports = true; renderReports(); } const fresh = !S.seenReports.has(d.report.id); pushReport(d.report); if (fresh && !d.report.mine) log('📡 New report from ' + d.report.who, 'warn'); },
+  layout(d) {
+    S.layout = true; clearPending('layout');
+    const keys = [];
+    d.components.forEach((c, i) => {
+      const key = c.type === 'LegendCard' ? 'Legend:' + c.data.id : c.type; keys.push(key);
+      const sec = slots.get(key);
+      if (c.type === 'MapPin' && c.data) { S.place = Object.assign(S.place || {}, { lat: c.data.lat, lon: c.data.lon }); if (!sec) renderMap(); }
+      if (c.type === 'NearbyHaunts' && c.data && !sec) renderNearby(c.data.places);
+      if (c.type === 'Timeline' && c.data && !sec) renderTimeline(c.data.events);
+      if (c.type === 'PlaceCard' && c.data && !sec) renderPlace(c.data);
+      if (c.type === 'LegendCard' && !sec) renderLegend(c.data);
+      const s2 = slots.get(key); if (s2) s2.style.order = String(i);
+    });
+    for (const [key, sec] of slots) if (!keys.includes(key) && !key.startsWith('Note:')) { sec.remove(); slots.delete(key); }
+    for (const [key, sec] of slots) if (key.startsWith('Note:')) sec.style.order = '99';
+    setTimeout(() => map && map.invalidateSize(), 300);
+    log('UI Architect (' + d.architect + ') arranged ' + d.components.length + ' components', 'ok');
+  },
+  choices(d) {
+    const box = h('div', null, h('h3', { text: '🧭 ' + d.prompt }), h('div', { class: 'choices' }, d.options.map((o, i) => h('button', { type: 'button', onclick: () => { ws.send(JSON.stringify({ type: 'choose', index: i })); const s = slots.get('Choices'); if (s) { s.remove(); slots.delete('Choices'); } log('You chose: ' + o.name, 'ok'); } }, h('b', null, o.name), ' ', h('span', { class: 'muted' }, '(' + o.region + ') ' + o.short)))));
+    mount('Choices', box); const s = slots.get('Choices'); if (s) s.style.order = '0';
+    log('Not sure which place you mean. Waiting for you to pick…', 'warn');
+  },
+  error(d) { clearPending(d.step); log((d.fatal ? '✖ ' : '⚠ ') + d.message, 'err'); note(d.message, d.fatal); },
+  done(d) { $('#go').disabled = false; clearPending('layout'); log(d.failed ? 'Transmission ended early. Try again.' : 'Transmission complete in ' + (d.ms / 1000).toFixed(1) + 's. The atlas is ready.', d.failed ? 'warn' : 'ok'); },
+};
+
+/* ---------------- websocket ---------------- */
+function connect() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+  ws.onopen = () => { retry = 0; $('#dot').classList.add('on'); $('#connTxt').textContent = 'connected'; };
+  ws.onclose = () => { $('#dot').classList.remove('on'); $('#connTxt').textContent = 'reconnecting…'; $('#go').disabled = false; setTimeout(connect, Math.min(8000, 800 * ++retry)); };
+  ws.onmessage = (ev) => { let m; try { m = JSON.parse(ev.data); } catch (_) { return; } const fn = handlers[m.event]; if (fn) { try { fn(m.data); } catch (e) { console.error('handler', m.event, e); } } };
+}
+
+/* ---------------- UI wiring ---------------- */
+function submit(payload) {
+  if (!ws || ws.readyState !== 1) { log('Not connected yet. One moment…', 'warn'); return; }
+  $('#go').disabled = true;
+  ws.send(JSON.stringify({ type: 'submit', demo: $('#demo').checked, ...payload }));
+}
+$('#form').addEventListener('submit', (e) => { e.preventDefault(); const t = $('#msg').value.trim(); if (!t) { $('#msg').focus(); return; } submit({ text: t }); });
+$('#msg').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#form').requestSubmit(); } });
+
+fetch('/api/config').then((r) => r.json()).then((c) => {
+  config = c;
+  const demo = $('#demo');
+  if (!c.live) { demo.checked = true; demo.disabled = true; $('#demoLbl').textContent = 'Demo mode (add API keys to go live)'; $('#hint').textContent = 'Running in Demo Mode: it replays researched data for three places through the same live stream. Add keys to .env to research any place.'; }
+  else { $('#demoLbl').textContent = 'Demo mode (off = live You.com research)'; $('#hint').textContent = 'Live keys found (You.com: ' + (c.youcom || 'checking') + '). Anything you type runs live through You.com + Parasail. Example chips replay the sourced demo.'; }
+  const chips = $('#chips');
+  c.chips.forEach((ch) => chips.append(h('button', { type: 'button', class: 'chip', title: ch.message, onclick: () => { $('#msg').value = ch.message; submit({ demoId: ch.id }); } }, ch.label)));
+}).catch(() => {});
+
+connect();
+})();
+</script>
+</body>
+</html>
+

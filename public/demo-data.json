@@ -1,0 +1,244 @@
+{
+  "meta": {
+    "researched_on": "2026-10-28",
+    "method": "Researched with web search and full page reads (Wikipedia, NPR, Mercat Tours, Historic Environment Scotland). The You.com connector was not available in the build environment, so the live app uses the You.com API at runtime but this demo set was sourced by hand. Every item is tagged 'fact' (documented history) or 'legend' (folklore / reported stories). Anything unverifiable was left out.",
+    "condition_tags": ["fog", "strong_wind", "storm", "rain", "cold", "full_moon", "new_moon"]
+  },
+  "places": {
+    "edinburgh": {
+      "id": "edinburgh",
+      "chip": "🏰 Fog over a castle on a rock, Scotland",
+      "message": "Thick fog is rolling in, the wind is howling, and an old stone castle sits on a huge rock above the city in Scotland. It is freezing cold and I can hear distant pipes.",
+      "clues": {
+        "place_guess": "Edinburgh Castle",
+        "region": "Edinburgh, Scotland",
+        "described_weather": ["fog", "strong wind", "cold"],
+        "spooky_clues": ["old stone castle", "on a huge rock above the city", "distant pipes"],
+        "mood": "eerie and windswept"
+      },
+      "place": {
+        "name": "Edinburgh Castle",
+        "short": "A royal fortress on an extinct volcano, once called 'the most besieged place in Great Britain'.",
+        "why_famous": "Research in 2014 counted 26 sieges in its 1,100-year history, and it still guards the Honours of Scotland.",
+        "region": "Edinburgh, Scotland",
+        "lat": 55.94861,
+        "lon": -3.20083,
+        "confidence": 0.97,
+        "kind": "castle",
+        "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle"
+      },
+      "demo_weather": {
+        "temperature_c": 6.1,
+        "apparent_c": 2.9,
+        "wind_kmh": 31,
+        "gust_kmh": 52,
+        "precip_mm": 0.2,
+        "visibility_m": 700,
+        "cloud_pct": 100,
+        "weather_code": 45,
+        "is_day": 0,
+        "temp_drop_c": 4.5,
+        "note": "Sample values (used only if the live weather service cannot be reached)."
+      },
+      "history": [
+        { "date": "1st–2nd century AD", "sort": 100, "title": "People already live on Castle Rock", "text": "Digs in the early 1990s found signs of people living on the rock in the 1st and 2nd centuries AD, including some Roman pottery and brooches.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "1124–1153", "sort": 1124, "title": "St Margaret's Chapel is built", "text": "King David I builds a small stone chapel for his family, dedicated to his mother Margaret. It is still the oldest building in Edinburgh.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "14 March 1314", "sort": 1314, "title": "A night-time climb wins the castle back", "text": "Thomas Randolph and thirty hand-picked men climb the steep north face in the dark and surprise the English garrison. Robert the Bruce then orders the defences torn down so the English cannot use them again.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "November 1440", "sort": 1440, "title": "The Black Dinner", "text": "Two young Douglas boys are invited to dinner in David's Tower, then executed on trumped-up charges while ten-year-old King James II looks on.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "19 June 1566", "sort": 1566, "title": "A future king is born", "text": "Mary, Queen of Scots gives birth to her son James in a small room of the palace. He later becomes King of both Scotland and England.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "28 May 1573", "sort": 1573, "title": "The Lang Siege ends", "text": "After two years of conflict and about 3,000 cannon shots in twelve days, the castle surrenders to English troops. Part of David's Tower and the Constable's Tower had collapsed in the bombardment.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "1650", "sort": 1650, "title": "Cromwell takes the castle", "text": "After a three-month siege, Oliver Cromwell's forces capture Edinburgh Castle when its governor surrenders.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "date": "1818", "sort": 1818, "title": "The lost crown is found", "text": "Sir Walter Scott is given permission to search the castle. He breaks into a sealed room and finds the Honours of Scotland, which had been believed lost.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Edinburgh_Castle" }
+      ],
+      "legends": [
+        {
+          "id": "piper",
+          "title": "The Lost Piper Boy",
+          "story": "Long ago, workers found secret tunnels beneath the castle. Nobody dared walk into the dark, so they sent a young boy down with his bagpipes. 'Play as you go,' they said, 'and we will follow your tune above ground.' The music drifted along under the cobblestones… and then, all at once, it stopped. No search party ever found a trace of him, so the tunnel was bricked up. Some say that on quiet nights you can still hear a tiny echo of his playing.",
+          "kind": "legend",
+          "conditions": [],
+          "conditions_note": "The sources do not tie this tale to any particular weather, so we judge it by general spookiness.",
+          "source": "https://www.mercattours.com/blog-post/3-dark-legends-of-edinburgh-castle"
+        },
+        {
+          "id": "dogs",
+          "title": "The Ghost Dogs of the Castle",
+          "story": "Near the Argyle Battery there is a tiny graveyard where soldiers buried their regiment's pet dogs. Visitors say that if you listen closely you may hear faint pawing and barking. And if you squint into the summer sea-fog, called the haar, you might spot the outline of a small black dog that is not quite solid enough to be real.",
+          "kind": "legend",
+          "conditions": ["fog"],
+          "conditions_note": "The tale says the dog is seen by squinting into the summer haar (sea fog).",
+          "source": "https://www.mercattours.com/blog-post/3-dark-legends-of-edinburgh-castle"
+        }
+      ],
+      "nearby": [
+        { "name": "Greyfriars Kirkyard", "lat": 55.9413, "lon": -3.1887, "legend": "Stories say that visitors near the grave of Sir George Mackenzie come away with scratches and nosebleeds. Historic Environment Scotland records the reports but not whether they are supernatural.", "best_night": "No weather link is documented. Try a still, dark evening for the full effect.", "best_night_kind": "suggestion", "source": "https://blog.historicenvironment.scot/2020/06/myth-busting/" },
+        { "name": "The Real Mary King's Close", "lat": 55.94995, "lon": -3.19049, "legend": "The visitor site tells of a psychic who sensed a lonely child named Annie who missed her doll. The site itself says researchers found no record of a child with that name.", "best_night": "It is underground, so weather barely matters. Any rainy day is a cosy time to go.", "best_night_kind": "suggestion", "source": "https://www.realmarykingsclose.com/experience/the-story-of-annies-doll/" }
+      ],
+      "sources": [
+        { "title": "Edinburgh Castle — Wikipedia", "url": "https://en.wikipedia.org/wiki/Edinburgh_Castle" },
+        { "title": "3 Dark Legends of Edinburgh Castle — Mercat Tours", "url": "https://www.mercattours.com/blog-post/3-dark-legends-of-edinburgh-castle" },
+        { "title": "Myth busting — Historic Environment Scotland blog", "url": "https://blog.historicenvironment.scot/2020/06/myth-busting/" },
+        { "title": "The Story of Annie's Doll — The Real Mary King's Close", "url": "https://www.realmarykingsclose.com/experience/the-story-of-annies-doll/" }
+      ],
+      "seed_reports": [
+        { "text": "Foggy night on the Royal Mile, castle completely vanished into the mist.", "weather": ["fog"], "who": "Wanderer (sample)" },
+        { "text": "Bitter wind up at the Esplanade and I swear I heard pipes. Probably a busker. Probably.", "weather": ["strong_wind", "cold"], "who": "Night owl (sample)" }
+      ]
+    },
+
+    "flannan": {
+      "id": "flannan",
+      "chip": "🌊 Storm at a lonely lighthouse",
+      "message": "A violent storm is battering a tall white lighthouse on a tiny island far out in the sea. Huge waves, screaming wind, no other land in sight. It is somewhere off the coast of Scotland.",
+      "clues": {
+        "place_guess": "Flannan Isles Lighthouse",
+        "region": "Outer Hebrides, Scotland",
+        "described_weather": ["storm", "strong wind", "rough sea"],
+        "spooky_clues": ["tall white lighthouse", "tiny remote island", "huge waves"],
+        "mood": "lonely and stormy"
+      },
+      "place": {
+        "name": "Flannan Isles Lighthouse",
+        "short": "A 23-metre lighthouse on Eilean Mòr where three keepers vanished in December 1900.",
+        "why_famous": "The keepers disappeared without a trace, and the mystery has inspired poems, an opera and films.",
+        "region": "Eilean Mòr, Outer Hebrides, Scotland",
+        "lat": 58.28806,
+        "lon": -7.58806,
+        "confidence": 0.95,
+        "kind": "lighthouse",
+        "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse"
+      },
+      "demo_weather": {
+        "temperature_c": 8.4,
+        "apparent_c": 3.1,
+        "wind_kmh": 58,
+        "gust_kmh": 91,
+        "precip_mm": 3.4,
+        "visibility_m": 4000,
+        "cloud_pct": 100,
+        "weather_code": 65,
+        "is_day": 0,
+        "temp_drop_c": 1.2,
+        "note": "Sample values (used only if the live weather service cannot be reached)."
+      },
+      "history": [
+        { "date": "1895–1899", "sort": 1895, "title": "Building on a cliff-top island", "text": "David Alan Stevenson designs the tower for the Northern Lighthouse Board. Every brick and bag of cement is hauled up 45-metre cliffs straight from supply boats.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "7 December 1899", "sort": 1899, "title": "The light is first lit", "text": "The lighthouse begins to shine out over the Atlantic.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "15 December 1900", "sort": 1900.1, "title": "A ship notices the light is out", "text": "The steamer Archtor, sailing from Philadelphia to Leith, notes in its log that the light is not working in poor weather.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "26 December 1900", "sort": 1900.2, "title": "The keepers are gone", "text": "When the relief ship Hesperus finally reaches the island, there is no flag, no welcome, and no keepers. The beds are unmade and the clock has stopped. Captain Harvie sends a telegram saying the three keepers have disappeared.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "29 December 1900", "sort": 1900.3, "title": "The official investigation", "text": "Superintendent Robert Muirhead finds storm damage at the west landing. His conclusion: the men went down to secure a box of ropes and an extra-large wave swept them away.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "1912", "sort": 1912, "title": "A poem makes the mystery famous", "text": "Wilfrid Wilson Gibson publishes the ballad 'Flannan Isle'. It adds a detail that was not true: an overturned chair and an uneaten meal.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "1925", "sort": 1925, "title": "Wireless messages arrive", "text": "The lighthouse becomes one of the first Scottish lights to receive messages from shore by wireless telegraphy.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "date": "28 September 1971", "sort": 1971, "title": "The lighthouse runs itself", "text": "The light is automated and a helipad is built so engineers can visit in heavy weather.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" }
+      ],
+      "legends": [
+        {
+          "id": "keepers",
+          "title": "The Keepers Who Vanished",
+          "story": "In December 1900 three lighthouse keepers (James Ducat, Thomas Marshall and Donald McArthur) were gone when help finally arrived. The doors were closed, the lamps were cleaned and filled, and not one person was on the island. The official answer was a huge wave that came up the cliff in a storm. But the sea is a good storyteller, and over the years people added more: a sea serpent, secret spies, even a ghost boat. One famous detail is not true, though. The scary 'log book diary' people quote was invented later. Nobody knows exactly what happened, which is why the tale lives on.",
+          "kind": "legend",
+          "conditions": ["storm", "strong_wind"],
+          "conditions_note": "The investigation found storm and big-wave damage at the west landing, so the tale is tied to storms and heavy seas.",
+          "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse"
+        },
+        {
+          "id": "seven-hunters",
+          "title": "The Phantom of the Seven Hunters",
+          "story": "The Flannan Isles are also called the Seven Hunters. Local people whispered that a boat filled with ghosts sailed these waters, and that its bad influence was what carried the keepers away. Newspapers of the day printed the idea alongside the sea serpent. It is a legend only, and there is no evidence the ghost boat ever existed.",
+          "kind": "legend",
+          "conditions": ["storm"],
+          "conditions_note": "Told alongside the stormy-sea disappearance, so we link it to rough weather.",
+          "source": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse"
+        }
+      ],
+      "nearby": [
+        { "name": "Calanais (Callanish) Standing Stones", "lat": 58.197, "lon": -6.745, "legend": "A local folk tale says the tall stones are giants who were turned to stone. Historic Environment Scotland dates the real stones to roughly 2900–2600 BCE and does not endorse the giant story.", "best_night": "No weather link is documented. A clear, dark night suits stone circles best.", "best_night_kind": "suggestion", "source": "https://www.historicenvironment.scot/visit/all/calanais-standing-stones/history-and-stories/" }
+      ],
+      "sources": [
+        { "title": "Flannan Isles Lighthouse — Wikipedia", "url": "https://en.wikipedia.org/wiki/Flannan_Isles_Lighthouse" },
+        { "title": "Calanais Standing Stones — Historic Environment Scotland", "url": "https://www.historicenvironment.scot/visit/all/calanais-standing-stones/history-and-stories/" }
+      ],
+      "seed_reports": [
+        { "text": "Gale force wind on the Lewis coast tonight, you can feel the sea in your bones.", "weather": ["strong_wind", "storm"], "who": "Ferry watcher (sample)" }
+      ]
+    },
+
+    "eastern-state": {
+      "id": "eastern-state",
+      "chip": "⛓️ Crumbling old prison, cold night",
+      "message": "It's a crisp, very cold, clear night. I'm outside a huge abandoned stone prison with towers and crumbling walls in a big American city. The moon is bright and everything echoes.",
+      "clues": {
+        "place_guess": "Eastern State Penitentiary",
+        "region": "Philadelphia, Pennsylvania, USA",
+        "described_weather": ["cold", "clear", "bright moon"],
+        "spooky_clues": ["abandoned stone prison", "towers", "crumbling walls", "echoes"],
+        "mood": "cold and echoing"
+      },
+      "place": {
+        "name": "Eastern State Penitentiary",
+        "short": "The world's first true penitentiary, now a crumbling museum in Philadelphia.",
+        "why_famous": "Its wagon-wheel design became the model for more than 300 prisons around the world.",
+        "region": "Philadelphia, Pennsylvania, USA",
+        "lat": 39.9683,
+        "lon": -75.1725,
+        "confidence": 0.96,
+        "kind": "prison",
+        "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary"
+      },
+      "demo_weather": {
+        "temperature_c": 2.3,
+        "apparent_c": -1.2,
+        "wind_kmh": 12,
+        "gust_kmh": 20,
+        "precip_mm": 0,
+        "visibility_m": 24000,
+        "cloud_pct": 5,
+        "weather_code": 0,
+        "is_day": 0,
+        "temp_drop_c": 3.2,
+        "note": "Sample values (used only if the live weather service cannot be reached)."
+      },
+      "history": [
+        { "date": "1821–1822", "sort": 1821, "title": "Cherry Hill is chosen", "text": "Pennsylvania buys an eleven-acre site called Cherry Hill. Architect John Haviland is chosen and building begins in 1822.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "25 October 1829", "sort": 1829, "title": "The doors open", "text": "Eastern State opens with seven corridors of heated cells lit by skylights. At the time it is the largest and most expensive public building in the United States.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "1913", "sort": 1913, "title": "The silent system ends", "text": "Overcrowding makes the original system of keeping prisoners apart impossible, and the prison officially abandons it.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "1924", "sort": 1924, "title": "Pep the 'cat-murdering' dog", "text": "A dog named Pep is sent to Eastern State and given inmate number C-2559. Records show the number, though why he was really there is still debated.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "3 April 1945", "sort": 1945, "title": "The great tunnel escape", "text": "Twelve inmates, including Willie Sutton, escape through a 97-foot (30 m) tunnel they secretly dug under the prison wall over a year.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "8 January 1961", "sort": 1961, "title": "The biggest riot", "text": "Inmates overpower a guard and the biggest riot in the prison's history breaks out before order is restored.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "1970–1971", "sort": 1970, "title": "The prison closes", "text": "It closes as a state prison in 1970 and is used briefly by the city until 1971. A 'forest' later grows up inside the cell blocks.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "date": "1994", "sort": 1994, "title": "Open for tours", "text": "After years of decay, Eastern State opens to the public for history tours and later becomes a National Historic Landmark museum.", "kind": "fact", "source": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" }
+      ],
+      "legends": [
+        {
+          "id": "cellblock12",
+          "title": "The Echoes of Cellblock 12",
+          "story": "Visitors, guards and staff have told the same story again and again, going back to the 1940s: in Cellblock 12, when nobody is there, you can hear echoing voices and strange cackling drifting out of the dark. Cellblock 6 has its darting shadows and the old guard tower its silhouette. Eastern State's own guides are honest about it: they do not claim the prison is haunted, and many visitors feel nothing at all. That is part of the mystery.",
+          "kind": "legend",
+          "conditions": [],
+          "conditions_note": "The sources do not tie these stories to any weather, so we judge them by general spookiness.",
+          "source": "https://www.npr.org/2013/10/24/232234570/is-eastern-state-penitentiary-really-haunted"
+        },
+        {
+          "id": "cellblock4",
+          "title": "The Faces in Cellblock 4",
+          "story": "In the early 1990s, a man who looks after the prison's old locks says he opened a cell door in Cellblock 4 and felt something hold him still. He described sad faces appearing on the cell walls, with one shape seeming to beckon him closer. It is one of the best-known stories told about the prison. It is one person's account, so enjoy it as a legend.",
+          "kind": "legend",
+          "conditions": [],
+          "conditions_note": "No weather link is documented for this account.",
+          "source": "https://www.npr.org/2013/10/24/232234570/is-eastern-state-penitentiary-really-haunted"
+        }
+      ],
+      "nearby": [
+        { "name": "Fort Mifflin", "lat": 39.87539, "lon": -75.21296, "legend": "A Delaware River fortress that is a National Historic Landmark and runs candlelit ghost tours. The official page tells of spirits at the fort but names no single verified ghost.", "best_night": "Its ghost tours run by candlelight after dark. A calm, cold night is a good bet.", "best_night_kind": "suggestion", "source": "https://www.fortmifflin.us/our-programs/paranormal-programs/para/" }
+      ],
+      "sources": [
+        { "title": "Eastern State Penitentiary — Wikipedia", "url": "https://en.wikipedia.org/wiki/Eastern_State_Penitentiary" },
+        { "title": "Is Eastern State Penitentiary Really Haunted? — NPR", "url": "https://www.npr.org/2013/10/24/232234570/is-eastern-state-penitentiary-really-haunted" },
+        { "title": "Paranormal programs — Fort Mifflin", "url": "https://www.fortmifflin.us/our-programs/paranormal-programs/para/" }
+      ],
+      "seed_reports": [
+        { "text": "Freezing clear night in Fairmount, the prison walls look huge under the moon.", "weather": ["cold"], "who": "Night walker (sample)" }
+      ]
+    }
+  }
+}
