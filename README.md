@@ -38,3 +38,4 @@ Pipeline events, streamed in order: `received → clues → place (or choices) �
 - You.com endpoints used: `GET api.you.com/v1/agents/search` (falls back to `ydc-index.io/v1/search`) and `POST api.you.com/v1/research`. Check <https://docs.you.com> if a field differs for your plan.
 - Leaflet and map tiles load from a CDN, so the map needs internet.
 - Tests: `node test-ws.js` (demo pipeline, run the server with `DEMO_DELAY=0`) and `node test-live-mock.js` (live pipeline against mocked APIs).
+# youcom
